@@ -1,5 +1,21 @@
 # iPod Artist Photos
 
+> **Please read first**
+>
+> - **Forked from PodBox.** `art_fetch.py` is a modified copy of the artwork
+>   tool from [PodBox](https://github.com/anthonyfletcher/podbox)
+>   ([`tools/art_fetch`](https://github.com/anthonyfletcher/podbox/tree/master/tools/art_fetch),
+>   version 3.8). This is an unofficial fork and isn't affiliated with or
+>   endorsed by the PodBox project. Please report problems with this tool
+>   here, not to PodBox.
+> - **Written with AI.** The changes to `art_fetch.py`, and the new
+>   `artist_fallback.py` and `Fetch iPod Artist Photos.bat`, were written with
+>   the help of Claude, an AI assistant made by Anthropic, at my direction.
+>   I've used them on my own iPod Classic, but they haven't been tested more
+>   widely.
+> - **Use at your own risk.** The tool writes picture files into your iPod's
+>   music folders and updates its database. Keep a backup of your music.
+
 A one-click Windows tool that fills the **Artist Portraits** menu of an iPod
 running [PodBox](https://github.com/anthonyfletcher/podbox), the Rockbox-based
 firmware for the iPod Classic and iPod Video.

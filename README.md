@@ -218,13 +218,14 @@ fill Artist Portraits, it left many artists with no picture:
 
 ### Changes from the original
 
-<!-- TODO: confirm against the real files before publishing -->
-
 **`art_fetch.py`**
 
-- **More reliable Last.fm.** Requests identify as a normal browser, and are
-  retried with pauses when Last.fm refuses them (HTTP 403, 406 or 429)
-  instead of giving up.
+- **More reliable Last.fm.** Last.fm pages are requested the way a web
+  browser asks for them, and when Last.fm refuses (HTTP 403 or 406) two other
+  ways are tried, with a pause between, before giving up.
+- **Every lookup retries when a site is busy.** A "too many requests" (429) or
+  "temporarily unavailable" (5xx) answer from any source is waited out and
+  tried again, instead of losing that source for the artist.
 - **Broken image links retried** at the other sizes Last.fm offers.
 - **Errors are shown** rather than skipped silently.
 - **Only the artist's own photos.** Pictures of similar artists are no longer

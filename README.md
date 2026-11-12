@@ -163,7 +163,7 @@ file.
 | Before step 1 | Album covers that were standing in for missing photos are set aside, so those artists are searched for again. |
 | 1. Fetch photos | Looks for a photo of each artist that doesn't have one yet. Artists with a real photo already are skipped. |
 | 2. Album cover fallback | Any artist still without a photo gets the cover of their biggest album, squared, instead. |
-| 3. Fetch bios | Writes a bio and banner for each artist that doesn't have one yet (see **Artist bios** below). |
+| 3. Fetch bios | Writes a bio and banner for each artist that doesn't have one yet (see **Artist bios** below). Runs only if the PodBox on your iPod has the Artist Bio screen. |
 | 4. Update database | Runs PodBox's database tool on the iPod. |
 | 5. Update art cache | Runs PodBox's art cache tool, so the new pictures show straight away. |
 
@@ -233,7 +233,10 @@ artist up again, run `python artist_bios.py "G:\Music" --refresh`, or for one
 artist add `--only "Artist Name"`. `--retry-not-found` looks again for the
 artists on the no-bio list.
 
-The Artist Bio screen needs a PodBox build that includes it.
+The Artist Bio screen needs a PodBox build that includes it. The `.bat`
+checks the iPod and skips this step when its PodBox doesn't have the screen.
+To change that, edit the `BIOS` line near the top of the `.bat`: `yes` writes
+bios whatever the firmware, `no` never does.
 
 ---
 

@@ -6,6 +6,11 @@ rem ============================================================
 rem  Change these if your iPod uses a different drive or folder
 set "IPOD=G:"
 set "MUSIC=G:\Music"
+
+rem  Artist bios, for PodBox's Artist Bio screen:
+rem    auto = only if the PodBox on this iPod has that screen
+rem    yes  = always       no = never
+set "BIOS=auto"
 rem ============================================================
 
 rem Run from the folder this file is in, so it finds the .py files
@@ -59,9 +64,26 @@ echo.
 echo ============================================================
 echo  Step 3 of 5: fetching artist bios
 echo ============================================================
+if /i "%BIOS%"=="no" (
+    echo Skipped: BIOS is set to no at the top of this file.
+    set "BIORESULT=skipped - BIOS=no"
+    goto :bios_done
+)
+if /i "%BIOS%"=="yes" goto :bios_run
+findstr /m /c:"Artwork/Bios" "%IPOD%\.rockbox\rockbox.ipod" >nul 2>&1 && goto :bios_run
+findstr /m /c:"No bio for this artist" "%IPOD%\.rockbox\langs\english.lng" >nul 2>&1 && goto :bios_run
+echo Skipped: the PodBox on this iPod has no Artist Bio screen.
+echo To write bios anyway, set BIOS=yes at the top of this file.
+set "BIORESULT=skipped - no Artist Bio screen on this iPod"
+goto :bios_done
+
+:bios_run
 echo Artists that already have a bio are skipped.
 echo.
 python artist_bios.py "%MUSIC%" --ipod %IPOD%\
+if errorlevel 1 (set "BIORESULT=FAILED - see messages above") else (set "BIORESULT=done")
+
+:bios_done
 
 echo.
 echo ============================================================
@@ -80,6 +102,7 @@ if errorlevel 1 (set "ARTRESULT=FAILED - see messages above") else (set "ARTRESU
 echo.
 echo ------------------------------------------------------------
 echo  Finished.
+echo  Artist bios       : %BIORESULT%
 echo  Database update   : %DBRESULT%
 echo  Art cache update  : %ARTRESULT%
 echo.

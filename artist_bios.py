@@ -33,7 +33,7 @@ Setup (once):
 """
 from __future__ import annotations
 
-import argparse, hashlib, io, json, math, os, re, sys, time, urllib.parse
+import argparse, difflib, hashlib, io, json, math, os, re, sys, time, urllib.parse
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -819,7 +819,7 @@ def find_photo(artist, who, adb, folders, session, args):
 
 
 # ---------------------------------------------------------------- one artist
-def fetch(artist, folders, session, args, known):
+def fetch(artist, folders, session, args, known, want_photo=True):
     """Who the artist is, their bio, subtitle and photo. Returns (meta, photo bytes)."""
     albums = album_titles(folders, artist)
     facts = {"known": known}
@@ -836,7 +836,7 @@ def fetch(artist, folders, session, args, known):
             "fetched": time.strftime("%Y-%m-%d")}
     remember(meta, who)
     photo, meta["photo_source"] = (None, "")
-    if not args.no_banners and (meta["bio"] or meta["subtitle"]):
+    if want_photo and not args.no_banners and (meta["bio"] or meta["subtitle"]):
         photo, meta["photo_source"] = find_photo(artist, who, adb, folders, session, args)
     return meta, photo
 
@@ -855,6 +855,13 @@ def stale(meta, days):
     except ValueError:
         return True
     return age > days * 86400
+
+def same_bio(old, new, alike=0.9):
+    """Whether two versions of a bio are virtually the same: at least 90% alike,
+    so a typo fix or a reworded sentence on Wikipedia doesn't count as new."""
+    if not old or not new:
+        return False
+    return difflib.SequenceMatcher(None, old, new, autojunk=False).ratio() >= alike
 
 def sha1(path):
     return hashlib.sha1(path.read_bytes()).hexdigest() if path.exists() else None
@@ -939,6 +946,7 @@ def main(argv=None):
             mp = CACHE / f"{name}.json"
             meta = json.loads(mp.read_text(encoding="utf-8")) if mp.exists() else None
             nothing = meta is not None and not (meta.get("bio") or meta.get("subtitle"))
+            due = meta is not None and not nothing and stale(meta, args.refresh_after)
             need = (meta is None or args.refresh or (nothing and args.retry_not_found)
                     or (not nothing and stale(meta, args.refresh_after))
                     or (not args.no_banners and meta.get("photo_source") is None))
@@ -947,9 +955,16 @@ def main(argv=None):
                     print(f"{i:4d}/{len(names)} {artist}")
                     known = {"wikidata": meta.get("wikidata"), "mbid": meta.get("mbid"),
                              "verified": meta.get("identity_verified", True)} if meta else {}
-                    new, photo = fetch(artist, artists[artist], session, args, known)
+                    # a yearly check keeps the photo already there; --refresh does not
+                    keep_photo = (due and not args.refresh and meta.get("photo_source")
+                                  and (CACHE / f"{name}.jpg").exists())
+                    new, photo = fetch(artist, artists[artist], session, args, known,
+                                       want_photo=not keep_photo)
                     if meta:                          # keep the record of what was written
                         new.update({k: meta[k] for k in ("txt_sha1", "jpg_sha1") if k in meta})
+                        if due and not args.refresh and same_bio(meta.get("bio"), new["bio"]):
+                            # only small edits since: leave the file on the iPod alone
+                            new.update({k: meta[k] for k in ("bio", "bio_source", "bio_verified")})
                         if meta.get("bio") and not new["bio"]:
                             # a source being down never costs a bio already found
                             new.update({k: meta[k] for k in ("bio", "bio_source", "bio_verified")})

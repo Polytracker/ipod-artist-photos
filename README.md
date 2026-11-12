@@ -9,9 +9,8 @@
 >   endorsed by the PodBox project. Please report problems with this tool
 >   here, not to PodBox.
 > - **Written with AI.** The changes to `art_fetch.py`, and the new
->   `artist_fallback.py`, `artist_bios.py` and `Fetch iPod Artist Photos.bat`,
->   were written with the help of Claude, an AI assistant made by Anthropic,
->   at my direction.
+>   `artist_fallback.py` and `Fetch iPod Artist Photos.bat`, were written with
+>   the help of Claude, an AI assistant made by Anthropic, at my direction.
 >   I've used them on my own iPod Classic, but they haven't been tested more
 >   widely.
 > - **Use at your own risk.** The tool writes picture files into your iPod's
@@ -27,9 +26,7 @@ Double-click one file and it:
    fanart.tv and TheAudioDB;
 2. uses an album cover for any artist with no photo anywhere, so nobody is
    left blank;
-3. writes a biography and a banner photo for each artist, for the
-   **Artist Bio** screen (hold Select on Now Playing);
-4. updates the iPod's database and art cache, so the pictures are there as
+3. updates the iPod's database and art cache, so the pictures are there as
    soon as you eject it, with nothing to do on the iPod itself.
 
 ---
@@ -41,9 +38,7 @@ Double-click one file and it:
   PodBox was last installed or updated. (The database tools refuse to run
   until it has.)
 - Music on the iPod arranged as `Music\Artist\Album\` folders, as PodBox and
-  most sync tools do. Album folders can be named any way you like:
-  `OK Computer`, `1997 - OK Computer` and `Radiohead - OK Computer` all work.
-  A year in front isn't needed.
+  most sync tools do.
 
 ---
 
@@ -67,12 +62,12 @@ python --version
 
 It should print something like `Python 3.12.4`.
 
-### 2. Install the libraries the tool uses
+### 2. Install the three libraries the tool uses
 
 In the same Command Prompt window, type:
 
 ```
-pip install requests pillow mutagen opencv-python
+pip install requests pillow mutagen
 ```
 
 Wait for it to finish, then close the window.
@@ -92,7 +87,6 @@ You should now have these files in that folder:
 | `Fetch iPod Artist Photos.bat` | The one you double-click. It runs everything below in order. |
 | `art_fetch.py` | Finds artist photos online. |
 | `artist_fallback.py` | Uses an album cover when no photo can be found. |
-| `artist_bios.py` | Writes each artist's bio and banner for the Artist Bio screen. |
 
 Keep them together in the same folder.
 
@@ -163,9 +157,8 @@ file.
 | Before step 1 | Album covers that were standing in for missing photos are set aside, so those artists are searched for again. |
 | 1. Fetch photos | Looks for a photo of each artist that doesn't have one yet. Artists with a real photo already are skipped. |
 | 2. Album cover fallback | Any artist still without a photo gets the cover of their biggest album, squared, instead. |
-| 3. Fetch bios | Writes a bio and banner for each artist that doesn't have one yet (see **Artist bios** below). Runs only if the PodBox on your iPod has the Artist Bio screen. |
-| 4. Update database | Runs PodBox's database tool on the iPod. |
-| 5. Update art cache | Runs PodBox's art cache tool, so the new pictures show straight away. |
+| 3. Update database | Runs PodBox's database tool on the iPod. |
+| 4. Update art cache | Runs PodBox's art cache tool, so the new pictures show straight away. |
 
 At the end it prints a summary, and saves two lists in the tool's folder:
 
@@ -173,7 +166,6 @@ At the end it prints a summary, and saves two lists in the tool's folder:
   no photo was found.
 - **Artists without photos.txt**: artists with no photo and no album art at
   all.
-- **Artists without bios.txt**: artists no bio could be found for.
 
 ### After each sync
 
@@ -184,7 +176,7 @@ Deezer gets one.
 
 ### Updating the iPod's database
 
-Steps 4 and 5 use PodBox's own PC tools, which come with PodBox and are
+Steps 3 and 4 use PodBox's own PC tools, which come with PodBox and are
 already on your iPod, in `.rockbox\tools\` (`database_pb.exe` and
 `artcache_pb.exe`). There is nothing extra to install, and you don't need to
 run anything on the iPod.
@@ -205,43 +197,6 @@ root of the iPod, and a picture there takes priority over the artist
 folder's `folder.jpg`. If an artist shows the wrong picture, check there
 first.
 
-### Artist bios
-
-Step 3 writes two files per artist into `Artwork\Bios` at the root of the
-iPod, which the **Artist Bio** screen reads:
-
-- `<Artist>.txt`: the name, a line of genre, home town and dates (birth to
-  death for a person, start to end for a band), then the biography.
-- `<Artist>.jpg`: a 320 x 160 banner from the artist's photo, cropped so
-  the faces stay in view.
-
-The bio is the introduction of the artist's English Wikipedia article. Where
-there is none it comes from Last.fm (with your Last.fm key) or Discogs, and
-failing those a line of facts. Before looking anything up it checks which
-artist yours is: when several share the name (a singer called Dijon, and the
-city), it picks the one whose albums match your album folders. A very long
-bio is swapped for a much shorter one from another source when there is one.
-
-Photos come from TheAudioDB, Deezer, Discogs or Wikipedia, or the cover of
-one of the artist's albums when none has one. What was downloaded is kept on
-the PC (in `%APPDATA%\RockboxArtistArt\bios`), so a later run only looks up
-new artists, plus any active artist whose bio is over a year old (change that
-with `--refresh-after DAYS`, or `0` to never). Artists who have died and bands
-that have split are left as they are. When a bio is checked again, it is only
-replaced if it has really changed, not for a small edit, and the banner photo
-stays as it was. If a source is down when a bio is due, the old one is kept.
-
-To write your own bio or banner, edit or replace the file in
-`Artwork\Bios`; the tool leaves a file you've changed alone. To look every
-artist up again, run `python artist_bios.py "G:\Music" --refresh`, or for one
-artist add `--only "Artist Name"`. `--retry-not-found` looks again for the
-artists on the no-bio list.
-
-The Artist Bio screen needs a PodBox build that includes it. The `.bat`
-checks the iPod and skips this step when its PodBox doesn't have the screen.
-To change that, edit the `BIOS` line near the top of the `.bat`: `yes` writes
-bios whatever the firmware, `no` never does.
-
 ---
 
 ## Troubleshooting
@@ -249,8 +204,7 @@ bios whatever the firmware, `no` never does.
 | Problem | What to do |
 |---|---|
 | `'python' is not recognized` | Python wasn't added to PATH. Run the Python installer again, choose **Modify**, and tick **Add Python to environment variables**. |
-| `No module named requests` (or `PIL`, `mutagen` or `cv2`) | Step 2 of installing didn't finish. Run `pip install requests pillow mutagen opencv-python` again. |
-| An artist has the wrong bio | Edit that artist's `.txt` in `Artwork\Bios` on the iPod; the tool leaves a file you've changed alone. Deleting it only brings the same bio back next run. |
+| `No module named requests` (or `PIL`, or `mutagen`) | Step 2 of installing didn't finish. Run `pip install requests pillow mutagen` again. |
 | `Can't find G:\Music` | The iPod isn't plugged in, or is on a different drive. See **Tell it where your iPod is**. |
 | An artist gets the wrong person's photo | Delete that artist's `folder.jpg` on the iPod and add one yourself (see **Adding a photo yourself**). |
 | An artist is never found | Check the artist's name is spelled correctly in your music tags. The tool searches by the name in your tags. |
@@ -302,9 +256,6 @@ of their biggest album (embedded in the tracks, or the album's `folder.jpg` or
 `cover.jpg`) into the artist's `folder.jpg`, as a baseline JPEG the iPod can
 read. With `--remove` it takes those stand-in covers away again, leaving any
 picture you've added yourself.
-
-**`artist_bios.py`** (new): bios and banner photos for PodBox's Artist Bio
-screen. See **Artist bios** above.
 
 **`Fetch iPod Artist Photos.bat`** (new): runs everything above in order,
 then updates the database and art cache with PodBox's tools.

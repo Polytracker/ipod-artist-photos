@@ -601,7 +601,11 @@ def identify(artist, session, albums=(), known=None):
     # Ambiguous (or not on Wikidata): the careful check against your albums.
     reason = f"{len(exact)} musicians called {plain}" if exact else "not found on Wikidata"
     print(f"     checking with MusicBrainz ({reason})")
-    mb = musicbrainz(artist, session, albums, known.get("mbid"))
+    try:
+        mb = musicbrainz(artist, session, albums, known.get("mbid"))
+    except Exception as e:
+        print(f"     musicbrainz unavailable ({e}), using the best match without it")
+        mb = None
     if mb and mb.get("wikidata"):
         ent = wd_entities([mb["wikidata"]], session).get(mb["wikidata"])
         if ent:

@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Update iPod (artist photos, database, art cache)
+title Update iPod (artist photos, bios, database, art cache)
 
 rem ============================================================
 rem  Change these if your iPod uses a different drive or folder
@@ -13,10 +13,10 @@ cd /d "%~dp0"
 set "TOOLS=%IPOD%\.rockbox\tools"
 set "PYTHONIOENCODING=utf-8"
 
-for %%F in (art_fetch.py artist_fallback.py) do (
+for %%F in (art_fetch.py artist_fallback.py artist_bios.py) do (
     if not exist "%%F" (
         echo Can't find %%F.
-        echo Put this file in the same folder as art_fetch.py and artist_fallback.py.
+        echo Put this file in the same folder as art_fetch.py, artist_fallback.py and artist_bios.py.
         echo.
         pause
         exit /b 1
@@ -40,7 +40,7 @@ python artist_fallback.py "%MUSIC%" --remove
 echo.
 
 echo ============================================================
-echo  Step 1 of 4: fetching artist photos online
+echo  Step 1 of 5: fetching artist photos online
 echo ============================================================
 echo Artists that already have a real photo are skipped.
 echo Artists with no photo found are skipped automatically.
@@ -51,20 +51,28 @@ python art_fetch.py artist "%MUSIC%" --retry-not-found
 
 echo.
 echo ============================================================
-echo  Step 2 of 4: using an album cover where no photo was found
+echo  Step 2 of 5: using an album cover where no photo was found
 echo ============================================================
 python artist_fallback.py "%MUSIC%"
 
 echo.
 echo ============================================================
-echo  Step 3 of 4: updating the music database
+echo  Step 3 of 5: fetching artist bios
+echo ============================================================
+echo Artists that already have a bio are skipped.
+echo.
+python artist_bios.py "%MUSIC%" --ipod %IPOD%\
+
+echo.
+echo ============================================================
+echo  Step 4 of 5: updating the music database
 echo ============================================================
 "%TOOLS%\database_pb.exe" %IPOD%\
 if errorlevel 1 (set "DBRESULT=FAILED - see messages above") else (set "DBRESULT=done")
 
 echo.
 echo ============================================================
-echo  Step 4 of 4: updating the art cache
+echo  Step 5 of 5: updating the art cache
 echo ============================================================
 "%TOOLS%\artcache_pb.exe" %IPOD%\
 if errorlevel 1 (set "ARTRESULT=FAILED - see messages above") else (set "ARTRESULT=done")
@@ -78,6 +86,7 @@ echo.
 echo  Lists saved next to this file:
 echo    "Artists using album cover.txt"
 echo    "Artists without photos.txt"
+echo    "Artists without bios.txt"
 echo.
 echo  Now eject the iPod. It restarts itself to load the changes.
 echo  If a step failed or was skipped, run it on the iPod instead:

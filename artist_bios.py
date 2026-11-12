@@ -840,6 +840,22 @@ def fetch(artist, folders, session, args, known):
         photo, meta["photo_source"] = find_photo(artist, who, adb, folders, session, args)
     return meta, photo
 
+def finished(meta):
+    """Whether the artist has died or the band has split, read off the dates line:
+    "1947–2016", "d. 2016" or "until 2007". Their bio no longer changes much."""
+    dates = (meta.get("subtitle") or "").rsplit("·", 1)[-1].strip()
+    return bool(re.fullmatch(r"\d{4}–\d{4}|d\. \d{4}|until \d{4}", dates))
+
+def stale(meta, days):
+    """Fetched more than `days` ago, for an artist who is still active."""
+    if not days or finished(meta):
+        return False
+    try:
+        age = time.time() - time.mktime(time.strptime(meta.get("fetched", ""), "%Y-%m-%d"))
+    except ValueError:
+        return True
+    return age > days * 86400
+
 def sha1(path):
     return hashlib.sha1(path.read_bytes()).hexdigest() if path.exists() else None
 
@@ -885,6 +901,9 @@ def main(argv=None):
     ap.add_argument("--ipod", help="the iPod's own folder (default: the folder holding the music folder)")
     ap.add_argument("--refresh", action="store_true", help="fetch every artist's bio and photo again")
     ap.add_argument("--retry-not-found", action="store_true", help="look again for artists nothing was found for")
+    ap.add_argument("--refresh-after", type=int, default=365, metavar="DAYS",
+                    help="fetch an active artist's bio again once it is this old (default 365; 0 = never). "
+                         "Artists who have died and bands that have split are not refreshed")
     ap.add_argument("--only", action="append", default=[], help="just this artist (can be given more than once)")
     ap.add_argument("--no-banners", action="store_true", help="bios only, no photos")
     ap.add_argument("--discogs-token", default=os.environ.get("DISCOGS_TOKEN"),
@@ -921,6 +940,7 @@ def main(argv=None):
             meta = json.loads(mp.read_text(encoding="utf-8")) if mp.exists() else None
             nothing = meta is not None and not (meta.get("bio") or meta.get("subtitle"))
             need = (meta is None or args.refresh or (nothing and args.retry_not_found)
+                    or (not nothing and stale(meta, args.refresh_after))
                     or (not args.no_banners and meta.get("photo_source") is None))
             try:
                 if need:
@@ -930,6 +950,13 @@ def main(argv=None):
                     new, photo = fetch(artist, artists[artist], session, args, known)
                     if meta:                          # keep the record of what was written
                         new.update({k: meta[k] for k in ("txt_sha1", "jpg_sha1") if k in meta})
+                        if meta.get("bio") and not new["bio"]:
+                            # a source being down never costs a bio already found
+                            new.update({k: meta[k] for k in ("bio", "bio_source", "bio_verified")})
+                        if meta.get("subtitle") and not new["subtitle"]:
+                            new["subtitle"] = meta["subtitle"]
+                        if meta.get("photo_source") and not photo:
+                            new["photo_source"] = meta["photo_source"]
                     meta = new
                     if photo:
                         (CACHE / f"{name}.jpg").write_bytes(photo)

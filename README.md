@@ -225,7 +225,10 @@ bio is swapped for a much shorter one from another source when there is one.
 Photos come from TheAudioDB, Deezer, Discogs or Wikipedia, or the cover of
 one of the artist's albums when none has one. What was downloaded is kept on
 the PC (in `%APPDATA%\RockboxArtistArt\bios`), so a later run only looks up
-new artists.
+new artists, plus any active artist whose bio is over a year old (change that
+with `--refresh-after DAYS`, or `0` to never). Artists who have died and bands
+that have split are left as they are. If a source is down when a bio is due,
+the old one is kept.
 
 To write your own bio or banner, edit or replace the file in
 `Artwork\Bios`; the tool leaves a file you've changed alone. To look every
